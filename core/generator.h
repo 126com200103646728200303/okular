@@ -744,6 +744,19 @@ public:
     bool isTile() const;
 
     /**
+     * Force this request to use TilesManager for rendering (even if the
+     * page's pixel area is very small or the whole page is visible),
+     * and prevent TilesManager from being dismantled later due to downscaling.
+     */
+    void setForceTiling(bool forceTiling);
+
+
+    /**
+     * Returns whether this request is marked as force tiling.
+     */
+    bool isForceTiling() const;
+
+    /**
      * Sets the region of the page to request.
      *
      * @since 0.16 (KDE 4.10)

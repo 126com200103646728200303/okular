@@ -1384,8 +1384,10 @@ void DocumentPrivate::sendGeneratorPixmapRequest()
             m_pixmapRequestsStack.pop_back();
             delete r;
         }
-        // If the requested area is above 4*screenSize pixels, and we're not rendering most of the page,  switch on the tile manager
-        else if (!tilesManager && m_generator->hasFeature(Generator::TiledRendering) && (long)r->width() * (long)r->height() > 4L * screenSize && normalizedArea < 0.75) {
+        // If the requested area is above 4*screenSize pixels, and we're not rendering most of the page, or forceTiling is enabled, switch on the tile manager
+        else if (!tilesManager && m_generator->hasFeature(Generator::TiledRendering) &&
+            (((long)r->width() * (long)r->height() > 4L * screenSize && normalizedArea < 0.75) || r->isForceTiling())
+        ){
             // if the image is too big. start using tiles
             qCDebug(OkularCoreDebug).nospace() << "Start using tiles on page " << r->pageNumber() << " (" << r->width() << "x" << r->height() << " px);";
 
@@ -1428,8 +1430,8 @@ void DocumentPrivate::sendGeneratorPixmapRequest()
                 delete r;
             }
         }
-        // If the requested area is below 3*screenSize pixels, switch off the tile manager
-        else if (tilesManager && (long)r->width() * (long)r->height() < 3L * screenSize) {
+        // If the requested area is below 3*screenSize pixels, switch off the tile manager, if forceTiling is not enabled...
+        else if (tilesManager && (long)r->width() * (long)r->height() < 3L * screenSize && !r->isForceTiling()) {
             qCDebug(OkularCoreDebug).nospace() << "Stop using tiles on page " << r->pageNumber() << " (" << r->width() << "x" << r->height() << " px);";
 
             // page is too small. stop using tiles.

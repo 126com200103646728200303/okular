@@ -235,6 +235,10 @@ public:
     QPoint lastDoubleClickPos;
     bool tripleClickDetectionEnabled = false;
 
+    // Merge refresh flag, set by the worker thread,
+    // cleared by the GUI thread, to avoid waking up for each tile
+    QAtomicInt m_pendingViewportUpdate;
+
     // actions
     QAction *aRotateClockwise = nullptr;
     QAction *aRotateCounterClockwise = nullptr;
@@ -1537,18 +1541,12 @@ void PageView::notifyPageChanged(int pageNumber, int changedFlags)
         return;
     }
 
-    // iterate over visible items: if page(pageNumber) is one of them, repaint it
+    // Only repaint when the changed page is actually visible (preserves the
+    // original "skip off-screen pages" behaviour).
+    bool pageVisible = false;
     for (const PageViewItem *visibleItem : std::as_const(d->visibleItems)) {
         if (visibleItem->pageNumber() == pageNumber && visibleItem->isVisible()) {
-            // update item's rectangle plus the little outline
-            QRect expandedRect = visibleItem->croppedGeometry();
-            // a PageViewItem is placed in the global page layout,
-            // while we need to map its position in the viewport coordinates
-            // (to get the correct area to repaint)
-            expandedRect.translate(-contentAreaPosition());
-            expandedRect.adjust(-1, -1, 3, 3);
-            viewport()->update(expandedRect);
-
+            pageVisible = true;
             // if we were "zoom-dragging" do not overwrite the "zoom-drag" cursor
             if (cursor().shape() != Qt::SizeVerCursor) {
                 // since the page has been regenerated below cursor, update it
@@ -1557,7 +1555,23 @@ void PageView::notifyPageChanged(int pageNumber, int changedFlags)
             break;
         }
     }
+
+    // Coalesce: instead of one cross-thread viewport()->update() per finished
+    // tile (which floods the GUI event loop with wakeups and makes the GLib
+    // main-context mutex convoy at high zoom on long docs), set the pending
+    // flag and queue a single repaint. Only the first call in a burst queues
+    // it, so we issue at most ONE wakeup per event-loop turn.
+    if (pageVisible && d->m_pendingViewportUpdate.testAndSetAcquire(0, 1)) {
+        QMetaObject::invokeMethod(this, "slotFlushViewportUpdate", Qt::QueuedConnection);
+    }
 }
+
+void PageView::slotFlushViewportUpdate()
+{
+    d->m_pendingViewportUpdate.storeRelease(0);
+    viewport()->update();
+}
+
 
 void PageView::notifyContentsCleared(int changedFlags)
 {
@@ -4937,12 +4951,14 @@ static void slotRequestPreloadPixmap(PageView *pageView, const PageViewItem *i, 
         const bool pageHasTilesManager = i->page()->hasTilesManager(pageView);
         if (pageHasTilesManager && !preRenderRegion.isNull()) {
             Okular::PixmapRequest *p = new Okular::PixmapRequest(pageView, i->pageNumber(), i->uncroppedWidth(), i->uncroppedHeight(), pageView->devicePixelRatioF(), PAGEVIEW_PRELOAD_PRIO, requestFeatures);
+            p->setForceTiling(true);
             requestedPixmaps->push_back(p);
 
             p->setNormalizedRect(preRenderRegion);
             p->setTile(true);
         } else if (!pageHasTilesManager) {
             Okular::PixmapRequest *p = new Okular::PixmapRequest(pageView, i->pageNumber(), i->uncroppedWidth(), i->uncroppedHeight(), pageView->devicePixelRatioF(), PAGEVIEW_PRELOAD_PRIO, requestFeatures);
+            p->setForceTiling(true);
             requestedPixmaps->push_back(p);
             p->setNormalizedRect(preRenderRegion);
         }
@@ -5031,6 +5047,14 @@ void PageView::slotRequestVisiblePixmaps(int newValue)
             qWarning() << "rerequesting visible pixmaps for page" << i->pageNumber() << "!";
 #endif
             Okular::PixmapRequest *p = new Okular::PixmapRequest(this, i->pageNumber(), i->uncroppedWidth(), i->uncroppedHeight(), devicePixelRatioF(), PAGEVIEW_PRIO, Okular::PixmapRequest::Asynchronous);
+
+
+            // Here we can just enable forcetile directly. It's enabled by default
+            // to get better scaling effects. We don't need to worry about whether
+            // the Generator has TiledRendering, because the places where it's used
+            // already have the necessary checks.
+            p->setForceTiling(true);
+
             requestedPixmaps.push_back(p);
 
             if (i->page()->hasTilesManager(this)) {

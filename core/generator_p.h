@@ -90,6 +90,7 @@ public:
     int mFeatures;
     bool mForce : 1;
     bool mTile : 1;
+    bool mForceTiling : 1;
     bool mPartialUpdatesWanted : 1;
     Page *mPage;
     NormalizedRect mNormalizedRect;

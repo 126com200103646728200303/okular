@@ -604,6 +604,7 @@ PixmapRequest::PixmapRequest(DocumentObserver *observer, int pageNumber, int wid
     d->mFeatures = features;
     d->mForce = false;
     d->mTile = false;
+    d->mForceTiling = false;
     d->mNormalizedRect = NormalizedRect();
     d->mPartialUpdatesWanted = false;
     d->mShouldAbortRender = 0;
@@ -662,6 +663,16 @@ void PixmapRequest::setTile(bool tile)
 bool PixmapRequest::isTile() const
 {
     return d->mTile;
+}
+
+void PixmapRequest::setForceTiling(bool forceTiling)
+{
+    d->mForceTiling = forceTiling;
+}
+
+bool PixmapRequest::isForceTiling() const
+{
+    return d->mForceTiling;
 }
 
 void PixmapRequest::setNormalizedRect(const NormalizedRect &rect)

@@ -296,9 +296,10 @@ private Q_SLOTS:
     void slotDragScroll();
     // show the welcome message
     void slotShowWelcome();
+    // coalesce rapid pixmap-update notifications into a single viewport repaint
+    void slotFlushViewportUpdate();
     // activated by left click timer
     void slotShowSizeAllCursor();
-
     void slotHandleWebShortcutAction();
     void slotConfigureWebShortcuts();
 
