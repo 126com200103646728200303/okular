@@ -1203,6 +1203,5 @@ void Shell::readRecentFilesSettings()
     m_recent->loadEntries(KSharedConfig::openConfig()->group(RecentFilesGroupKey()));
 }
 
+#include "moc_shell.cpp"
 #include "shell.moc"
-
-/* kate: replace-tabs on; indent-width 4; */

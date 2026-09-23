@@ -122,8 +122,8 @@ void ColorModeMenu::slotConfigChanged()
     }
 
     // Update color icons
-    m_aPaperColor->setIcon(GuiUtils::createColorIcon(QList<QColor>() << Okular::Settings::paperColor(), QIcon::fromTheme(QStringLiteral("paper-color"))));
-    m_aDarkLight->setIcon(GuiUtils::createColorIcon(QList<QColor>() << Okular::Settings::recolorForeground() << Okular::Settings::recolorBackground(), QIcon::fromTheme(QStringLiteral("color-mode-black-white"))));
+    m_aPaperColor->setIcon(GuiUtils::createColorIcon({Okular::Settings::paperColor()}, QIcon::fromTheme(QStringLiteral("paper-color"))));
+    m_aDarkLight->setIcon(GuiUtils::createColorIcon({Okular::Settings::recolorForeground(), Okular::Settings::recolorBackground()}, QIcon::fromTheme(QStringLiteral("color-mode-black-white"))));
 
     // Update toggle action
     m_aChangeColors->setChecked(Okular::SettingsCore::changeColors());
@@ -137,3 +137,5 @@ void ColorModeMenu::slotChanged()
         a->setEnabled(enabled);
     }
 }
+
+#include "moc_colormodemenu.cpp"

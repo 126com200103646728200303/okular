@@ -472,4 +472,4 @@ void PagesEdit::wheelEvent(QWheelEvent *e)
     }
 }
 
-/* kate: replace-tabs on; indent-width 4; */
+#include "moc_minibar.cpp"

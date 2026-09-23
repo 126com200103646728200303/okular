@@ -1017,6 +1017,5 @@ ThumbnailController::ThumbnailController(QWidget *parent, ThumbnailList *list)
     // insertLineSeparator();
 }
 
+#include "moc_thumbnaillist.cpp"
 #include "thumbnaillist.moc"
-
-/* kate: replace-tabs on; indent-width 4; */

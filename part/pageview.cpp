@@ -5197,7 +5197,7 @@ void PageView::slotHandleWebShortcutAction()
 
 void PageView::slotConfigureWebShortcuts()
 {
-    auto *job = new KIO::CommandLauncherJob(QStringLiteral("kcmshell6"), QStringList() << QStringLiteral("webshortcuts"));
+    auto *job = new KIO::CommandLauncherJob(QStringLiteral("kcmshell6"), {QStringLiteral("webshortcuts")});
     job->start();
 }
 
@@ -5927,4 +5927,4 @@ void PageView::highlightSignatureFormWidget(const Okular::FormFieldSignature *fo
 
 // END private SLOTS
 
-/* kate: replace-tabs on; indent-width 4; */
+#include "moc_pageview.cpp"
